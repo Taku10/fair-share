@@ -1,9 +1,10 @@
-// server/models/Roommate.js
+
 const mongoose = require('mongoose');
 
 const roommateSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: String,
+  firebaseUid: { type: String, required: true, unique: true },
+  displayName: String,
+  email: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
