@@ -2,9 +2,10 @@
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { auth } from "../firebase";
 
-const API_BASE = "http://localhost:3000/api";
-const SOCKET_URL = "http://localhost:3000";
+const API_BASE = "http://localhost:5000/api";
+const SOCKET_URL = "http://localhost:5000";
 
 function ChatRoom({ roomId, currentUser }) {
   const [messages, setMessages] = useState([]);
@@ -16,8 +17,8 @@ function ChatRoom({ roomId, currentUser }) {
   // load chat history once via REST
   async function loadHistory() {
     try {
-      const token = await currentUser.getIdToken();
-      const res = await axios.get(`${API_BASE}/rooms/${roomId}/chat`, {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await axios.get(`${API_BASE}/chat/${roomId}/chat`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(res.data);
@@ -36,7 +37,7 @@ function ChatRoom({ roomId, currentUser }) {
     let active = true;
 
     const setupSocket = async () => {
-      const token = await currentUser.getIdToken();
+      const token = await auth.currentUser?.getIdToken();
       const socket = io(SOCKET_URL, {
         auth: { token },
       });

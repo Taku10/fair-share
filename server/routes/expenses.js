@@ -3,13 +3,76 @@ const express = require('express');
 const router = express.Router();
 const Expense = require('../models/Expense');
 const Roommate = require('../models/Roommate');
+const Room = require('../models/Room');
+
+async function getOrCreateDefaultRoomFor(roommateId) {
+  let room = await Room.findOne({ name: 'Default Room' });
+  if (!room) {
+    room = await Room.create({ name: 'Default Room', createdBy: roommateId, members: [roommateId] });
+  } else {
+    const isMember = room.members.some((m) => String(m) === String(roommateId));
+    if (!isMember) {
+      room.members.push(roommateId);
+      await room.save();
+    }
+  }
+  return room;
+}
 
 // CREATE expense
 router.post('/', async (req, res) => {
   try {
+    console.log('📥 POST /expenses received:', JSON.stringify(req.body, null, 2));
+    console.log('   Current user roommateId:', req.user.roommateId);
+    
+    // Basic payload validation and normalization
+    const { description, amount, paidBy } = req.body;
+    let splitBetween = Array.isArray(req.body.splitBetween) ? req.body.splitBetween : [];
+    if (!description || !String(description).trim()) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+    const parsedAmount = typeof amount === 'number' ? amount : parseFloat(amount);
+    if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ error: 'Amount must be a positive number' });
+    }
+    if (!paidBy) {
+      return res.status(400).json({ error: 'paidBy is required' });
+    }
+    // Ensure payer is included in splitBetween once
+    splitBetween = splitBetween.map(String);
+    const paidByStr = String(paidBy);
+    if (!splitBetween.includes(paidByStr)) {
+      splitBetween.push(paidByStr);
+    }
+    // De-duplicate splitBetween
+    splitBetween = Array.from(new Set(splitBetween));
+    req.body.amount = parsedAmount;
+    req.body.splitBetween = splitBetween;
+
+    // Ensure a roomId exists; assign default room if missing and add current user as member
+    if (!req.body.roomId) {
+      console.log('   No roomId provided, creating/finding default room...');
+      const defaultRoom = await getOrCreateDefaultRoomFor(req.user.roommateId);
+      console.log('   Default room ID:', defaultRoom._id);
+      req.body.roomId = defaultRoom._id;
+    }
+
+    console.log('   Creating expense with payload:', JSON.stringify(req.body, null, 2));
     const expense = await Expense.create(req.body);
-    res.status(201).json(expense);
+    console.log('✅ Expense created successfully:', expense._id);
+    // Populate using a follow-up query to avoid chained populate issues
+    const populated = await Expense.findById(expense._id)
+      .populate('paidBy')
+      .populate('splitBetween');
+    res.status(201).json(populated);
   } catch (err) {
+    console.error('❌ Expense creation failed:', err.message);
+    console.error('   Validation errors:', err.errors);
+    // Provide more detailed feedback when available
+    if (err?.errors) {
+      const details = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ error: err.message, details });
+    }
     res.status(400).json({ error: err.message });
   }
 });
@@ -87,7 +150,7 @@ router.get('/balances/summary', async (req, res) => {
     const roommates = await Roommate.find();
     const result = roommates.map((rm) => ({
       roommateId: rm._id,
-      name: rm.name,
+      name: rm.displayName || (rm.email ? rm.email.split('@')[0] : 'Roommate'),
       balance: balances[String(rm._id)] || 0,
     }));
 

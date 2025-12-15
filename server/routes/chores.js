@@ -2,6 +2,21 @@
 const express = require('express');
 const router = express.Router();
 const Chore = require('../models/Chore');
+const Room = require('../models/Room');
+
+async function getOrCreateDefaultRoomFor(roommateId) {
+  let room = await Room.findOne({ name: 'Default Room' });
+  if (!room) {
+    room = await Room.create({ name: 'Default Room', createdBy: roommateId, members: [roommateId] });
+  } else {
+    const isMember = room.members.some((m) => String(m) === String(roommateId));
+    if (!isMember) {
+      room.members.push(roommateId);
+      await room.save();
+    }
+  }
+  return room;
+}
 
 //So this is where all all the CRUD operations will go for chores
 
@@ -9,8 +24,21 @@ const Chore = require('../models/Chore');
 //Creating a new chore
 router.post('/', async (req, res) => {
   try {
+    // Basic validation
+    const { title, frequency } = req.body;
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ error: 'Title is required' });
+    }
+
+    // Ensure a roomId exists; assign default room if missing and add current user as member
+    if (!req.body.roomId) {
+      const defaultRoom = await getOrCreateDefaultRoomFor(req.user.roommateId);
+      req.body.roomId = defaultRoom._id;
+    }
+
     const chore = await Chore.create(req.body);
-    res.status(201).json(chore);
+    const populated = await Chore.findById(chore._id).populate('assignedTo');
+    res.status(201).json(populated);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -19,7 +47,7 @@ router.post('/', async (req, res) => {
 // View or read all chores
 router.get('/', async (req, res) => {
   try {
-    const chores = await Chore.find().sort({ createdAt: -1 });
+    const chores = await Chore.find().sort({ createdAt: -1 }).populate('assignedTo');
     res.json(chores);
   } catch (err) {
     res.status(500).json({ error: err.message });

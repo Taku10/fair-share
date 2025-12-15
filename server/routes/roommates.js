@@ -15,10 +15,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Reading all roommates
+// Reading all roommates (exclude the current user)
 router.get('/', async (req, res) => {
   try {
-    const roommates = await Roommate.find().sort({ createdAt: -1 });
+    const roommates = await Roommate.find({ _id: { $ne: req.user.roommateId } })
+      .sort({ createdAt: -1 });
     res.json(roommates);
   } catch (err) {
     res.status(500).json({ error: err.message });

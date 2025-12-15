@@ -12,13 +12,14 @@ const Room = require('./models/Room');
 const ChatMessage = require('./models/ChatMessage');
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: /localhost/, credentials: true }));
 app.use(express.json());
 
 // --- Your existing routers here ---
 const roomsRouter = require('./routes/rooms');
 const choresRouter = require('./routes/chores');
 const expensesRouter = require('./routes/expenses');
+const roomatesRouter = require('./routes/roommates');
 const chatRouter = require('./routes/chat'); // for history REST
 
 const authMiddleware = require('./middleware/auth');
@@ -26,16 +27,17 @@ const authMiddleware = require('./middleware/auth');
 // Protect API routes with Firebase Auth
 app.use('/api', authMiddleware);
 app.use('/api/rooms', roomsRouter);
-app.use('/api/rooms', choresRouter);
-app.use('/api/rooms', expensesRouter);
-app.use('/api/rooms', chatRouter);
+app.use('/api/chores', choresRouter);
+app.use('/api/expenses', expensesRouter);
+app.use('/api/roommates', roomatesRouter);
+app.use('/api/chat', chatRouter);
 
 // --- HTTP server + socket.io ---
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5174',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -45,9 +47,20 @@ const io = new Server(server, {
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) return next(new Error('No token'));
 
-    const decoded = await admin.auth().verifyIdToken(token);
+    let decoded;
+
+    // If dev bypass is enabled, synthesize a decoded token from DEV_* env vars
+    if (process.env.ALLOW_DEV_AUTH === 'true') {
+      decoded = {
+        uid: process.env.DEV_FIREBASE_UID || 'dev-uid-1',
+        email: process.env.DEV_EMAIL || 'dev@local',
+        name: process.env.DEV_NAME || 'Dev User',
+      };
+    } else {
+      if (!token) return next(new Error('No token'));
+      decoded = await admin.auth().verifyIdToken(token);
+    }
 
     let roommate = await Roommate.findOne({ firebaseUid: decoded.uid });
     if (!roommate) {
@@ -140,12 +153,3 @@ mongoose
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err);
   });
-
-  const token = await currentUser.getIdToken();
-axios.get(url, { headers: { Authorization: `Bearer ${token}` }});
-
-axios.post(`/api/rooms/${roomId}/chat`, {
-  text: "Talking about this chore",
-  relatedType: "chore",
-  relatedId: chore._id
-});
