@@ -286,7 +286,7 @@ function ChoresSection() {
     try {
       setLoading(true);
       const res = await apiGet('/chores');
-      setChores(res.data);
+      setChores(Array.isArray(res.data) ? res.data : []);
       setError("");
     } catch (err) {
       console.error(err);
@@ -534,7 +534,7 @@ function RoommatesSection() {
   async function fetchRoommates() {
     try {
       const res = await apiGet('/roommates');
-      setRoommates(res.data);
+      setRoommates(Array.isArray(res.data) ? res.data : []);
       setError("");
     } catch (err) {
       console.error(err);
@@ -641,17 +641,17 @@ function ExpensesSection() {
 
   async function fetchRoommates() {
     const res = await apiGet('/roommates');
-    setRoommates(res.data);
+    setRoommates(Array.isArray(res.data) ? res.data : []);
   }
 
   async function fetchExpenses() {
     const res = await apiGet('/expenses');
-    setExpenses(res.data);
+    setExpenses(Array.isArray(res.data) ? res.data : []);
   }
 
   async function fetchBalances() {
     const res = await apiGet('/expenses/balances/summary');
-    setBalances(res.data);
+    setBalances(Array.isArray(res.data) ? res.data : []);
   }
 
   useEffect(() => {
