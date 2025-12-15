@@ -261,7 +261,7 @@ function ChatSection({ currentUser }) {
           key={selectedRoomId} 
           roomId={selectedRoomId} 
           currentUser={currentUser}
-          initialMessages={roomMessages[selectedRoomId] || []}
+          initialMessages={Array.isArray(roomMessages[selectedRoomId]) ? roomMessages[selectedRoomId] : []}
           room={rooms.find(r => r._id === selectedRoomId)}
         />
       )}

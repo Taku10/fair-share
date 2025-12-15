@@ -14,7 +14,8 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
 
   // Initialize with preloaded messages from parent
   useEffect(() => {
-    setMessages(initialMessages);
+    const msgs = Array.isArray(initialMessages) ? initialMessages : [];
+    setMessages(msgs);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
@@ -98,7 +99,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
               {room.members.map((member) => {
                 const name = member?.displayName || member?.email?.split('@')[0] || 'User';
                 const initials = name.substring(0, 2).toUpperCase();
-                const messageCount = messages.filter(m => m.sender?._id === member._id).length;
+                const messageCount = Array.isArray(messages) ? messages.filter(m => m.sender?._id === member._id).length : 0;
                 return (
                   <div
                     key={member._id}
