@@ -7,7 +7,7 @@ const API_BASE = "http://localhost:5000/api";
 
 function RoomApp () {
   const [activeTab, setActiveTab] = useState("chores");
-const { currentUser, authLoading, logout } = useAuth();
+const { currentUser, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -86,7 +86,6 @@ function ChatSection({ currentUser }) {
   const [newRoomName, setNewRoomName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [roomMessages, setRoomMessages] = useState({});
-  const [messagesLoading, setMessagesLoading] = useState(false);
 
   async function fetchRoomsAndSelect(firstLoad = false) {
     try {
@@ -109,7 +108,6 @@ function ChatSection({ currentUser }) {
   async function fetchAllRoomMessages(roomList) {
     if (!roomList || roomList.length === 0) return;
     try {
-      setMessagesLoading(true);
       const messagesMap = {};
       
       await Promise.all(
@@ -127,13 +125,12 @@ function ChatSection({ currentUser }) {
       setRoomMessages(messagesMap);
     } catch (err) {
       console.error(err);
-    } finally {
-      setMessagesLoading(false);
     }
   }
 
   useEffect(() => {
     fetchRoomsAndSelect(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Ensure messages load when switching selected room
@@ -508,7 +505,6 @@ function ChoresSection() {
                     setEditingChoreId(chore._id);
                     setTitle(chore.title);
                     setFrequency(chore.frequency || 'weekly');
-                    setAssignedTo(chore.assignedTo?._id || chore.assignedTo || "");
                   }}
                   className="btn btn-secondary"
                 >
@@ -547,7 +543,14 @@ function RoommatesSection() {
   }
 
   useEffect(() => {
-    fetchRoommates();
+    const load = async () => {
+      try {
+        await fetchRoommates();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    load();
   }, []);
 
   async function handleDeleteRoommate(id) {
@@ -652,12 +655,15 @@ function ExpensesSection() {
   }
 
   useEffect(() => {
-    Promise.all([fetchRoommates(), fetchExpenses(), fetchBalances()]).catch(
-      (err) => {
+    const load = async () => {
+      try {
+        await Promise.all([fetchRoommates(), fetchExpenses(), fetchBalances()]);
+      } catch (err) {
         console.error(err);
         setError("Failed to load expenses data");
       }
-    );
+    };
+    load();
   }, []);
 
   function toggleSplitBetween(id) {

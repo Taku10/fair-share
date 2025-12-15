@@ -9,23 +9,14 @@ const SOCKET_URL = "http://localhost:5000";
 function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
-  const [error, setError] = useState("");
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
   // Initialize with preloaded messages from parent
   useEffect(() => {
     setMessages(initialMessages);
-  }, [roomId, initialMessages]);
-
-  // Calculate unique message senders from this room
-  const messageSenders = messages.reduce((acc, msg) => {
-    const senderId = msg.sender?._id;
-    if (senderId && !acc.some(s => s._id === senderId)) {
-      acc.push(msg.sender);
-    }
-    return acc;
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   // connect socket when component mounts
   useEffect(() => {
@@ -134,7 +125,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
             </div>
           )}
         </div>
-        {error && <p style={{ color: "#dc2626", marginTop: 4 }}>{error}</p>}
+        
       </div>
 
       <div

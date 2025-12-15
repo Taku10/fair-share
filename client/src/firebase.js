@@ -19,11 +19,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-let analytics;
+// Initialize analytics (not used directly but important for Firebase tracking)
 try {
-  // Guard analytics init in environments that don't support it
   if (typeof window !== 'undefined') {
-    analytics = getAnalytics(app);
+    getAnalytics(app);
   }
 } catch (e) {
   console.warn('Analytics initialization skipped:', e);
