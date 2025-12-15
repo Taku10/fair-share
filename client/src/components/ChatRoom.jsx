@@ -1,10 +1,9 @@
-// client/src/components/ChatRoom.jsx
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { auth } from "../firebase";
 
-const API_BASE = "http://localhost:5000/api";
-const SOCKET_URL = "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
 
 function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
   const [messages, setMessages] = useState(initialMessages);
@@ -12,19 +11,20 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
   const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
-  // Initialize with preloaded messages from parent
+  // Keep whatever the parent preloaded; ignore noisy deps to avoid loops
   useEffect(() => {
     const msgs = Array.isArray(initialMessages) ? initialMessages : [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages(msgs);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId]);
+  }, [roomId, initialMessages]);
 
-  // connect socket when component mounts
+  // Socket lifecycle per room
   useEffect(() => {
     let active = true;
 
     const setupSocket = async () => {
       const token = await auth.currentUser?.getIdToken();
+      if (!token) return; // user signed out mid-session
       const socket = io(SOCKET_URL, {
         auth: { token },
       });
@@ -47,6 +47,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
     };
 
     setupSocket();
+    // TODO: add basic reconnect/backoff if socket drops
 
     return () => {
       active = false;
@@ -63,7 +64,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
   function handleSend(e) {
     e.preventDefault();
     if (!text.trim()) return;
-    if (!socketRef.current) return;
+    if (!socketRef.current) return; // socket not ready yet
 
     socketRef.current.emit("sendMessage", {
       roomId,

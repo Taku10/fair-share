@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { auth } from "./firebase";
 
-function AuthPage() {
+function AuthPage({ onBack }) {
   const { currentUser } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -36,46 +36,77 @@ function AuthPage() {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "2rem auto" }}>
-      <h2>{isRegister ? "Register" : "Login"}</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="auth-shell">
+      <div className="auth-glow auth-glow-1" aria-hidden="true" />
+      <div className="auth-glow auth-glow-2" aria-hidden="true" />
+      <div className="auth-card">
+        <div className="auth-head">
+          {onBack && (
+            <button type="button" className="auth-back" onClick={onBack}>
+              ← Back
+            </button>
+          )}
+          <div className="auth-pill">Fair Share</div>
+        </div>
+        <h1 className="auth-title">{isRegister ? "Create your home" : "Welcome back"}</h1>
+        <p className="auth-subtitle">
+          {isRegister
+            ? "Spin up a space for your house and invite everyone to keep chores, expenses, and chat aligned."
+            : "Log in to sync chores, track expenses, and keep the house in flow."}
+        </p>
 
-      <form onSubmit={handleSubmit}>
-        {isRegister && (
-          <input
-            type="text"
-            placeholder="Display name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", marginBottom: "0.5rem" }}
-          />
-        )}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem", marginBottom: "0.5rem" }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem", marginBottom: "0.5rem" }}
-        />
-        <button type="submit" style={{ padding: "0.5rem 1rem", width: "100%" }}>
-          {isRegister ? "Create account" : "Login"}
-        </button>
-      </form>
+        {error && <div className="auth-alert">{error}</div>}
 
-      <button
-        type="button"
-        onClick={() => setIsRegister((b) => !b)}
-        style={{ marginTop: "0.5rem" }}
-      >
-        {isRegister ? "Already have an account? Login" : "Need an account? Register"}
-      </button>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          {isRegister && (
+            <label className="auth-field">
+              <span>Display name</span>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Roomie nickname"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </label>
+          )}
+
+          <label className="auth-field">
+            <span>Email</span>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className="auth-field">
+            <span>Password</span>
+            <input
+              type="password"
+              className="form-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+
+          <button type="submit" className="btn btn-primary auth-submit">
+            {isRegister ? "Create account" : "Sign in"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <span>{isRegister ? "Already have an account?" : "New here?"}</span>
+          <button type="button" className="auth-toggle" onClick={() => setIsRegister((b) => !b)}>
+            {isRegister ? "Switch to sign in" : "Switch to create one"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
