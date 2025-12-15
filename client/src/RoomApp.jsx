@@ -91,7 +91,7 @@ function ChatSection({ currentUser }) {
     try {
       setLoading(true);
       const res = await apiGet('/rooms');
-      setRooms(res.data);
+      setRooms(Array.isArray(res.data) ? res.data : []);
       if ((firstLoad || !selectedRoomId) && res.data.length > 0) {
         setSelectedRoomId(res.data[0]._id);
       }
@@ -114,7 +114,7 @@ function ChatSection({ currentUser }) {
         roomList.map(async (room) => {
           try {
             const res = await apiGet(`/chat/${room._id}/chat`);
-            messagesMap[room._id] = res.data || [];
+            messagesMap[room._id] = Array.isArray(res.data) ? res.data : [];
           } catch (err) {
             console.error('Failed to load messages for room', room._id, err);
             messagesMap[room._id] = [];
@@ -139,7 +139,7 @@ function ChatSection({ currentUser }) {
       if (!selectedRoomId) return;
       try {
         const res = await apiGet(`/chat/${selectedRoomId}/chat`);
-        setRoomMessages((prev) => ({ ...prev, [selectedRoomId]: res.data || [] }));
+        setRoomMessages((prev) => ({ ...prev, [selectedRoomId]: Array.isArray(res.data) ? res.data : [] }));
       } catch (err) {
         console.error('Failed to load messages for selected room', selectedRoomId, err);
       }

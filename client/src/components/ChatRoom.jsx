@@ -94,7 +94,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
               {room?.members?.length || 0} member{room?.members?.length === 1 ? '' : 's'} • {messages.length} message{messages.length === 1 ? '' : 's'}
             </div>
           </div>
-          {room?.members && room.members.length > 0 && (
+          {Array.isArray(room?.members) && room.members.length > 0 && (
             <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
               {room.members.map((member) => {
                 const name = member?.displayName || member?.email?.split('@')[0] || 'User';
@@ -140,7 +140,7 @@ function ChatRoom({ roomId, currentUser, initialMessages = [], room }) {
           gap: '0.5rem'
         }}
       >
-        {messages.map((m) => {
+        {Array.isArray(messages) && messages.map((m) => {
           const mine = m.sender?.email === currentUser.email;
           return (
             <div
