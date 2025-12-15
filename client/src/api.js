@@ -2,53 +2,69 @@
 import axios from "axios";
 import { auth } from "./firebase";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
 
 // Helper to get token from current user
 async function getAuthToken() {
   try {
     const user = auth.currentUser;
     if (!user) {
-      console.warn("No authenticated user found. User is not logged in.");
-      return null;
+      const err = new Error("No authenticated user");
+      console.warn(err.message);
+      throw err;
     }
     const token = await user.getIdToken(true); // Force refresh
-    console.log("Token obtained successfully");
     return token;
   } catch (error) {
-    console.error("Failed to get auth token:", error.message);
-    return null;
+    console.error("Failed to get auth token:", error);
+    throw error;
   }
 }
 
 export async function apiGet(path) {
-  const token = await getAuthToken();
-
-  return axios.get(`${API_BASE}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  try {
+    const token = await getAuthToken();
+    return await axios.get(`${API_BASE}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('apiGet error:', path, err);
+    throw err;
+  }
 }
 
 export async function apiPost(path, data) {
-  const token = await getAuthToken();
-
-  return axios.post(`${API_BASE}${path}`, data, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  try {
+    const token = await getAuthToken();
+    return await axios.post(`${API_BASE}${path}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('apiPost error:', path, data, err);
+    throw err;
+  }
 }
 
 export async function apiPut(path, data) {
-  const token = await getAuthToken();
-
-  return axios.put(`${API_BASE}${path}`, data, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  try {
+    const token = await getAuthToken();
+    return await axios.put(`${API_BASE}${path}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('apiPut error:', path, data, err);
+    throw err;
+  }
 }
 
 export async function apiDelete(path) {
-  const token = await getAuthToken();
-
-  return axios.delete(`${API_BASE}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  try {
+    const token = await getAuthToken();
+    return await axios.delete(`${API_BASE}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('apiDelete error:', path, err);
+    throw err;
+  }
 }

@@ -146,15 +146,16 @@ router.get('/balances/summary', async (req, res) => {
       }
     }
 
-    // return with roommate names
-    const roommates = await Roommate.find();
-    const result = roommates.map((rm) => ({
-      roommateId: rm._id,
-      name: rm.displayName || (rm.email ? rm.email.split('@')[0] : 'Roommate'),
-      balance: balances[String(rm._id)] || 0,
-    }));
+    // return only the logged-in user's balance
+    const meId = String(req.user.roommateId);
+    const me = await Roommate.findById(meId);
+    const payload = [{
+      roommateId: me?._id,
+      name: me?.displayName || (me?.email ? me.email.split('@')[0] : 'Me'),
+      balance: balances[meId] || 0,
+    }];
 
-    res.json(result);
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

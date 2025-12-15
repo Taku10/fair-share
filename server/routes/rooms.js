@@ -57,7 +57,7 @@ router.post('/join/:code', async (req, res) => {
       await room.save();
     }
 
-    await room.populate('members').populate('createdBy');
+    await room.populate(['members', 'createdBy']);
     res.json(room);
   } catch (err) {
     res.status(400).json({ error: err.message });

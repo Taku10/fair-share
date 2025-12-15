@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { browserSessionPersistence, getAuth, inMemoryPersistence, setPersistence } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,7 +19,26 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+let analytics;
+try {
+  // Guard analytics init in environments that don't support it
+  if (typeof window !== 'undefined') {
+    analytics = getAnalytics(app);
+  }
+} catch (e) {
+  console.warn('Analytics initialization skipped:', e);
+}
 const auth = getAuth(app);
+
+// Prevent cross-tab auth mirroring by scoping auth state per-tab.
+// Use sessionStorage (per-tab) or in-memory (per-window) based on env flag.
+{
+  const useMemory = import.meta.env.VITE_AUTH_IN_MEMORY === 'true';
+  // Avoid top-level await: fire-and-forget with catch
+  setPersistence(auth, useMemory ? inMemoryPersistence : browserSessionPersistence)
+    .catch((e) => {
+      console.warn('Auth persistence setup failed, falling back to default:', e);
+    });
+}
 
 export { auth };

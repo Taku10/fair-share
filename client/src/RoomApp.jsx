@@ -83,25 +83,122 @@ function ChatSection({ currentUser }) {
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [newRoomName, setNewRoomName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [roomMessages, setRoomMessages] = useState({});
+  const [messagesLoading, setMessagesLoading] = useState(false);
+
+  async function fetchRoomsAndSelect(firstLoad = false) {
+    try {
+      setLoading(true);
+      const res = await apiGet('/rooms');
+      setRooms(res.data);
+      if ((firstLoad || !selectedRoomId) && res.data.length > 0) {
+        setSelectedRoomId(res.data[0]._id);
+      }
+      // Fetch messages for all rooms
+      await fetchAllRoomMessages(res.data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load rooms for chat");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchAllRoomMessages(roomList) {
+    if (!roomList || roomList.length === 0) return;
+    try {
+      setMessagesLoading(true);
+      const messagesMap = {};
+      
+      await Promise.all(
+        roomList.map(async (room) => {
+          try {
+            const res = await apiGet(`/chat/${room._id}/chat`);
+            messagesMap[room._id] = res.data || [];
+          } catch (err) {
+            console.error('Failed to load messages for room', room._id, err);
+            messagesMap[room._id] = [];
+          }
+        })
+      );
+      
+      setRoomMessages(messagesMap);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  }
 
   useEffect(() => {
-    const load = async () => {
+    fetchRoomsAndSelect(true);
+  }, []);
+
+  // Ensure messages load when switching selected room
+  useEffect(() => {
+    const loadSelectedRoomMessages = async () => {
+      if (!selectedRoomId) return;
       try {
-        setLoading(true);
-        const res = await apiGet('/rooms');
-        setRooms(res.data);
-        if (res.data.length > 0) {
-          setSelectedRoomId(res.data[0]._id);
-        }
+        const res = await apiGet(`/chat/${selectedRoomId}/chat`);
+        setRoomMessages((prev) => ({ ...prev, [selectedRoomId]: res.data || [] }));
       } catch (err) {
-        console.error(err);
-        setError("Failed to load rooms for chat");
-      } finally {
-        setLoading(false);
+        console.error('Failed to load messages for selected room', selectedRoomId, err);
       }
     };
-    load();
-  }, []);
+    loadSelectedRoomMessages();
+  }, [selectedRoomId]);
+
+  async function handleCreateRoom(e) {
+    e.preventDefault();
+    if (!newRoomName.trim()) return;
+    try {
+      setLoading(true);
+      setError("");
+      const res = await apiPost('/rooms', { name: newRoomName.trim() });
+      const updatedRooms = [res.data, ...rooms];
+      setRooms(updatedRooms);
+      setSelectedRoomId(res.data._id);
+      setNewRoomName("");
+      // Refresh from server to ensure all rooms appear
+      fetchRoomsAndSelect();
+    } catch (err) {
+      console.error(err);
+      setError("Could not create room");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleJoinRoom(e) {
+    e.preventDefault();
+    if (!joinCode.trim()) return;
+    try {
+      setLoading(true);
+      setError("");
+      const res = await apiPost(`/rooms/join/${joinCode.trim()}`);
+      const existing = rooms.find((r) => r._id === res.data._id);
+      const updatedRooms = existing ? rooms : [res.data, ...rooms];
+      setRooms(updatedRooms);
+      setSelectedRoomId(res.data._id);
+      setJoinCode("");
+      // Immediately fetch messages for the joined room
+      try {
+        const msgRes = await apiGet(`/chat/${res.data._id}/chat`);
+        setRoomMessages(prev => ({ ...prev, [res.data._id]: msgRes.data || [] }));
+      } catch (msgErr) {
+        console.error('Failed to load messages for joined room:', msgErr);
+      }
+      // Refresh from server to ensure all rooms appear
+      await fetchRoomsAndSelect();
+    } catch (err) {
+      console.error(err);
+      setError("Invalid room code or join failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="section">
@@ -124,6 +221,34 @@ function ChatSection({ currentUser }) {
             <option key={r._id} value={r._id}>{r.name || 'Room'}</option>
           ))}
         </select>
+        <button type="button" className="btn btn-secondary" onClick={() => fetchRoomsAndSelect(true)}>
+          Refresh
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+        <form onSubmit={handleCreateRoom} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--bg-light)', padding: '0.75rem', borderRadius: 8 }}>
+          <input
+            type="text"
+            placeholder="New room name"
+            value={newRoomName}
+            onChange={(e) => setNewRoomName(e.target.value)}
+            className="form-input"
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="btn btn-primary">Create</button>
+        </form>
+        <form onSubmit={handleJoinRoom} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--bg-light)', padding: '0.75rem', borderRadius: 8 }}>
+          <input
+            type="text"
+            placeholder="Enter room code"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            className="form-input"
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="btn btn-secondary">Join</button>
+        </form>
       </div>
 
       {loading && <div className="loading"><span className="loading-spinner"></span> Loading rooms...</div>}
@@ -135,7 +260,13 @@ function ChatSection({ currentUser }) {
       )}
 
       {selectedRoomId && currentUser && (
-        <ChatRoom roomId={selectedRoomId} currentUser={currentUser} />
+        <ChatRoom 
+          key={selectedRoomId} 
+          roomId={selectedRoomId} 
+          currentUser={currentUser}
+          initialMessages={roomMessages[selectedRoomId] || []}
+          room={rooms.find(r => r._id === selectedRoomId)}
+        />
       )}
     </div>
   );
