@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const expenseSchema = new mongoose.Schema({
-  // roomId is optional for now; app doesn't assign rooms yet
+
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: false, default: null },
   description: { type: String, required: true },
   amount: { type: Number, required: true },
