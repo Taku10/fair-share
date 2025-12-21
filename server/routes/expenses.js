@@ -116,12 +116,22 @@ router.put('/:id', async (req, res) => {
     }
     
     if (paidBy !== undefined) {
+      // Validate ObjectId format
+      if (!paidBy || typeof paidBy !== 'string' || !/^[a-f\d]{24}$/i.test(paidBy)) {
+        return res.status(400).json({ error: 'Invalid paidBy ID' });
+      }
       updateFields.paidBy = paidBy;
     }
     
     if (splitBetween !== undefined) {
       if (!Array.isArray(splitBetween) || splitBetween.length === 0) {
         return res.status(400).json({ error: 'splitBetween must be a non-empty array' });
+      }
+      // Validate all ObjectIds in the array
+      for (const id of splitBetween) {
+        if (!id || typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) {
+          return res.status(400).json({ error: 'Invalid ID in splitBetween' });
+        }
       }
       updateFields.splitBetween = splitBetween;
     }

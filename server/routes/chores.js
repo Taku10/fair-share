@@ -69,6 +69,10 @@ router.put('/:id', async (req, res) => {
       updateFields.title = trimmedTitle.substring(0, 100);
     }
     if (assignedTo !== undefined) {
+      // Allow null/empty to unassign, otherwise validate ObjectId format
+      if (assignedTo && (typeof assignedTo !== 'string' || !/^[a-f\d]{24}$/i.test(assignedTo))) {
+        return res.status(400).json({ error: 'Invalid assignedTo ID' });
+      }
       updateFields.assignedTo = assignedTo || null;
     }
     if (completed !== undefined) {
