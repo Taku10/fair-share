@@ -44,10 +44,6 @@ function ExpensesSection() {
         load();
     }, []);
 
-    function toggleSplitBetween(id) {
-        setSplitBetween((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    }
-
     async function handleAddExpense(e) {
         e.preventDefault();
         setError("");
@@ -351,7 +347,6 @@ function ExpensesSection() {
                     <>
                         <ul className="list">
                             {(() => {
-                                const totalPages = Math.ceil(expenses.length / itemsPerPage);
                                 const startIndex = (currentPage - 1) * itemsPerPage;
                                 const endIndex = startIndex + itemsPerPage;
                                 const paginatedExpenses = expenses.slice(startIndex, endIndex);

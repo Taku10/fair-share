@@ -241,7 +241,6 @@ function ChoresSection() {
 
                                 return matchesSearch && matchesStatus && matchesAssignee;
                             });
-                            const totalPages = Math.ceil(filtered.length / itemsPerPage);
                             const startIndex = (currentPage - 1) * itemsPerPage;
                             const endIndex = startIndex + itemsPerPage;
                             const paginatedChores = filtered.slice(startIndex, endIndex);

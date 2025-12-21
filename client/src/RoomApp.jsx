@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { apiGet } from "./api";
 import ChatSection from "./components/ChatSection";
@@ -13,22 +13,18 @@ function RoomApp() {
   const [profile, setProfile] = useState(null);
   const { currentUser, logout } = useAuth();
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  async function loadProfile() {
+  const loadProfile = useCallback(async () => {
     try {
       const res = await apiGet("/roommates/me");
       setProfile(res.data);
     } catch (err) {
       console.error("Failed to load profile", err);
     }
-  }
+  }, []);
 
-  const handleLogout = async () => {
-    await logout();
-  };
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleProfileClose = () => {
     setShowProfile(false);

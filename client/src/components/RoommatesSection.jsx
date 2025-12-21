@@ -97,7 +97,6 @@ function RoommatesSection() {
                 const email = (rm.email || "").toLowerCase();
                 return name.includes(q) || email.includes(q);
               });
-              const totalPages = Math.ceil(filtered.length / itemsPerPage);
               const startIndex = (currentPage - 1) * itemsPerPage;
               const endIndex = startIndex + itemsPerPage;
               const paginatedRoommates = filtered.slice(startIndex, endIndex);
