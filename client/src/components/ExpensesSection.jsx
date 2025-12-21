@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "../api";
+import ConfirmDialog from "./ConfirmDialog";
 
 function ExpensesSection() {
     const [expenses, setExpenses] = useState([]);
@@ -12,6 +13,9 @@ function ExpensesSection() {
     const [splitBetween, setSplitBetween] = useState([]);
     const [error, setError] = useState("");
     const [editingExpenseId, setEditingExpenseId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+    const [confirmDelete, setConfirmDelete] = useState(null);
 
     async function fetchRoommates() {
         const res = await apiGet("/roommates");
@@ -46,15 +50,54 @@ function ExpensesSection() {
 
     async function handleAddExpense(e) {
         e.preventDefault();
-        if (!description.trim() || !amount || !paidBy || splitBetween.length === 0) {
-            setError("Fill all fields and pick roommates to split between");
+        setError("");
+
+        // Validation
+        if (!description.trim()) {
+            setError("Description is required");
+            return;
+        }
+
+        if (description.trim().length > 100) {
+            setError("Description must be less than 100 characters");
+            return;
+        }
+
+        if (!amount || amount.trim() === "") {
+            setError("Amount is required");
+            return;
+        }
+
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount)) {
+            setError("Amount must be a valid number");
+            return;
+        }
+
+        if (parsedAmount <= 0) {
+            setError("Amount must be greater than 0");
+            return;
+        }
+
+        if (parsedAmount > 1000000) {
+            setError("Amount must be less than $1,000,000");
+            return;
+        }
+
+        if (!paidBy) {
+            setError("Please select who paid");
+            return;
+        }
+
+        if (splitBetween.length === 0) {
+            setError("Please select at least one roommate to split between");
             return;
         }
 
         try {
             const payload = {
-                description,
-                amount: parseFloat(amount),
+                description: description.trim(),
+                amount: parsedAmount,
                 paidBy,
                 splitBetween,
             };
@@ -77,23 +120,38 @@ function ExpensesSection() {
             fetchBalances();
         } catch (err) {
             console.error(err);
-            setError("Failed to add expense");
+            setError(err.response?.data?.message || "Failed to save expense. Please try again.");
         }
     }
 
     async function handleDeleteExpense(id) {
+        setConfirmDelete(id);
+    }
+
+    async function confirmDeleteExpense() {
+        const id = confirmDelete;
+        setConfirmDelete(null);
+
         try {
+            setError("");
             await apiDelete(`/expenses/${id}`);
             setExpenses((prev) => prev.filter((e) => e._id !== id));
             fetchBalances();
         } catch (err) {
             console.error(err);
-            setError("Failed to delete expense");
+            setError(err.response?.data?.message || "Failed to delete expense. Please try again.");
         }
     }
 
     return (
         <div className="section">
+            <ConfirmDialog
+                isOpen={confirmDelete !== null}
+                title="Delete Expense"
+                message="Are you sure you want to delete this expense? This action cannot be undone."
+                onConfirm={confirmDeleteExpense}
+                onCancel={() => setConfirmDelete(null)}
+            />
             <h2>Expenses</h2>
             <p style={{ color: "var(--text-light)", marginBottom: "1.5rem" }}>
                 Add roommates in the Roommates tab first, then log expenses here and see who owes who.
@@ -111,11 +169,12 @@ function ExpensesSection() {
                     />
                     <input
                         type="number"
-                        placeholder="Amount"
+                        placeholder="$"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         className="form-input"
-                        style={{ flex: 0, minWidth: "100px" }}
+                        style={{ flex: 0, minWidth: "120px" }}
+                        step="0.01"
                     />
                     <select
                         value={paidBy}
@@ -150,43 +209,77 @@ function ExpensesSection() {
                     )}
                 </div>
 
-                <div style={{ marginTop: "1rem", padding: "1rem", background: "var(--bg-light)", borderRadius: "8px" }}>
+                <div style={{ marginTop: "1rem" }}>
                     <strong style={{ display: "block", marginBottom: "0.5rem" }}>Split between:</strong>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                        {roommates.map((rm) => {
-                            const selected = splitBetween.includes(rm._id);
-                            return (
-                                <button
-                                    type="button"
-                                    key={rm._id}
-                                    onClick={() => toggleSplitBetween(rm._id)}
-                                    style={{
-                                        border: selected ? "1px solid var(--primary)" : "1px solid #e5e7eb",
-                                        background: selected ? "rgba(99, 102, 241, 0.12)" : "#fff",
-                                        color: selected ? "var(--primary)" : "var(--text-dark)",
-                                        padding: "0.55rem 0.85rem",
-                                        borderRadius: "999px",
-                                        cursor: "pointer",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "0.5rem",
-                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                                        transition: "all 0.15s ease",
-                                    }}
-                                >
-                                    <span
-                                        style={{
-                                            width: 8,
-                                            height: 8,
-                                            borderRadius: "50%",
-                                            background: selected ? "var(--primary)" : "#cbd5e1",
-                                        }}
-                                    ></span>
+                    <select
+                        value=""
+                        onChange={(e) => {
+                            const id = e.target.value;
+                            if (id && !splitBetween.includes(id)) {
+                                setSplitBetween([...splitBetween, id]);
+                            }
+                        }}
+                        className="form-select"
+                    >
+                        <option value="">Add roommate...</option>
+                        {roommates
+                            .filter(rm => !splitBetween.includes(rm._id))
+                            .map((rm) => (
+                                <option key={rm._id} value={rm._id}>
                                     {rm.displayName || (rm.email ? rm.email.split("@")[0] : "Roommate")}
-                                </button>
-                            );
-                        })}
-                    </div>
+                                </option>
+                            ))
+                        }
+                    </select>
+                    {splitBetween.length > 0 && (
+                        <div style={{ 
+                            marginTop: "0.75rem", 
+                            display: "flex", 
+                            flexWrap: "wrap", 
+                            gap: "0.5rem" 
+                        }}>
+                            {splitBetween.map((id) => {
+                                const rm = roommates.find(r => r._id === id);
+                                if (!rm) return null;
+                                return (
+                                    <span
+                                        key={id}
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "0.5rem",
+                                            background: "rgba(99, 102, 241, 0.12)",
+                                            color: "var(--primary)",
+                                            padding: "0.5rem 0.75rem",
+                                            borderRadius: "999px",
+                                            fontSize: "0.9rem",
+                                            fontWeight: 600,
+                                            border: "1px solid rgba(99, 102, 241, 0.2)"
+                                        }}
+                                    >
+                                        {rm.displayName || (rm.email ? rm.email.split("@")[0] : "Roommate")}
+                                        <button
+                                            type="button"
+                                            onClick={() => setSplitBetween(splitBetween.filter(x => x !== id))}
+                                            style={{
+                                                background: "none",
+                                                border: "none",
+                                                color: "var(--primary)",
+                                                cursor: "pointer",
+                                                fontSize: "1.1rem",
+                                                lineHeight: 1,
+                                                padding: 0,
+                                                display: "flex",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </form>
 
@@ -208,10 +301,11 @@ function ExpensesSection() {
                                     key={b.roommateId}
                                     style={{
                                         padding: "0.85rem 1rem",
-                                        borderRadius: "10px",
-                                        border: "1px solid #e5e7eb",
-                                        background: "#fff",
-                                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                                        borderRadius: "12px",
+                                        border: "1px solid rgba(102, 126, 234, 0.2)",
+                                        background: "rgba(255, 255, 255, 0.03)",
+                                        backdropFilter: "blur(20px)",
+                                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "space-between",
@@ -219,7 +313,7 @@ function ExpensesSection() {
                                 >
                                     <div>
                                         <div style={{ fontWeight: 700, color: "var(--text-dark)" }}>{b.name}</div>
-                                        <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
+                                        <div style={{ fontSize: "0.85rem", color: "var(--text-light)" }}>
                                             {negative ? "owes" : positive ? "is owed" : "settled"}
                                         </div>
                                     </div>
@@ -227,12 +321,14 @@ function ExpensesSection() {
                                         style={{
                                             fontSize: "1.1rem",
                                             fontWeight: 800,
-                                            color: negative ? "#dc2626" : positive ? "#16a34a" : "var(--text-dark)",
-                                            background: negative ? "#fef2f2" : positive ? "#f0fdf4" : "#f8fafc",
+                                            color: negative ? "#fca5a5" : positive ? "#86efac" : "var(--text-dark)",
+                                            background: negative ? "rgba(248, 113, 113, 0.15)" : positive ? "rgba(34, 197, 94, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                            border: negative ? "1px solid rgba(248, 113, 113, 0.3)" : positive ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid rgba(102, 126, 234, 0.2)",
                                             padding: "0.5rem 0.9rem",
                                             borderRadius: "8px",
                                             minWidth: "90px",
                                             textAlign: "right",
+                                            backdropFilter: "blur(10px)"
                                         }}
                                     >
                                         {negative ? "−" : positive ? "+" : ""}${Math.abs(b.balance).toFixed(2)}
@@ -252,8 +348,15 @@ function ExpensesSection() {
                         <p className="empty-state-text">No expenses yet. Add one to get started!</p>
                     </div>
                 ) : (
-                    <ul className="list">
-                        {expenses.map((exp) => (
+                    <>
+                        <ul className="list">
+                            {(() => {
+                                const totalPages = Math.ceil(expenses.length / itemsPerPage);
+                                const startIndex = (currentPage - 1) * itemsPerPage;
+                                const endIndex = startIndex + itemsPerPage;
+                                const paginatedExpenses = expenses.slice(startIndex, endIndex);
+
+                                return paginatedExpenses.map((exp) => (
                             <li key={exp._id} className="list-item">
                                 <div className="list-item-content">
                                     <div className="list-item-title">
@@ -284,8 +387,45 @@ function ExpensesSection() {
                                     </button>
                                 </div>
                             </li>
-                        ))}
-                    </ul>
+                                ));
+                            })()}
+                        </ul>
+                        {(() => {
+                            const totalPages = Math.ceil(expenses.length / itemsPerPage);
+                            if (totalPages <= 1) return null;
+
+                            return (
+                                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", marginTop: "1.5rem" }}>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="btn btn-secondary"
+                                        style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+                                    >
+                                        ← Prev
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`btn ${currentPage === page ? "btn-primary" : "btn-secondary"}`}
+                                            style={{ minWidth: "40px" }}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="btn btn-secondary"
+                                        style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            );
+                        })()}
+                    </>
                 )}
             </div>
         </div>

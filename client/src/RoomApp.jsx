@@ -1,43 +1,157 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { apiGet } from "./api";
 import ChatSection from "./components/ChatSection";
 import ChoresSection from "./components/ChoresSection";
 import ExpensesSection from "./components/ExpensesSection";
+import ProfileSection from "./components/ProfileSection";
 import RoommatesSection from "./components/RoommatesSection";
 
 function RoomApp() {
   const [activeTab, setActiveTab] = useState("chores");
+  const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState(null);
   const { currentUser, logout } = useAuth();
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function loadProfile() {
+    try {
+      const res = await apiGet("/roommates/me");
+      setProfile(res.data);
+    } catch (err) {
+      console.error("Failed to load profile", err);
+    }
+  }
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleProfileClose = () => {
+    setShowProfile(false);
+    loadProfile(); // Refresh profile data when modal closes
   };
 
   return (
     <div className="app-container">
       <header className="app-header">
         <div className="header-content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1 className="app-title">Fair Share</h1>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div style={{ flex: '1 1 200px' }}>
+              <h1 className="app-title">FairShare</h1>
               <p className="app-subtitle">
-                Keep roommate chores and shared bills fair and transparent.
+                Your household, perfectly balanced
               </p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ marginBottom: '0.5rem', fontSize: '0.95rem', opacity: 0.9 }}>
-                👤 {currentUser?.email}
-              </p>
+            <div style={{ textAlign: 'right', flex: '0 0 auto', position: 'relative' }}>
               <button
-                onClick={handleLogout}
-                className="btn btn-logout"
+                onClick={() => setShowProfile(!showProfile)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '999px',
+                  padding: '0.5rem 1rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
-                🚪 Logout
+                <span style={{ fontSize: '1.2rem' }}>👤</span>
+                {profile?.displayName || currentUser?.displayName || currentUser?.email?.split("@")[0] || currentUser?.email}
+                <span style={{ fontSize: '0.7rem' }}>{showProfile ? '▲' : '▼'}</span>
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Profile Modal */}
+      {showProfile && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.3s ease'
+          }}
+          onClick={() => setShowProfile(false)}
+        >
+          <div 
+            style={{
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={handleProfileClose}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '1.5rem',
+                color: 'var(--text-dark)',
+                zIndex: 10,
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'rotate(90deg)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.transform = 'rotate(0deg)';
+              }}
+            >
+              ×
+            </button>
+            <ProfileSection onClose={handleProfileClose} />
+          </div>
+        </div>
+      )}
 
       <div className="tab-navigation">
         <button

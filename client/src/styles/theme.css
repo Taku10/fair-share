@@ -1,18 +1,22 @@
 :root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
+  --primary: #667eea;
+  --primary-dark: #764ba2;
   --primary-light: #818cf8;
   --accent: #ec4899;
   --accent-light: #f472b6;
-  --success: #10b981;
+  --success: #22c55e;
+  --success-muted: #86efac;
   --warning: #f59e0b;
-  --danger: #ef4444;
-  --bg-dark: #0f172a;
-  --bg-light: #f8fafc;
-  --text-dark: #1e293b;
-  --text-light: #64748b;
-  --border: #e2e8f0;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --danger: #f87171;
+  --danger-muted: #fca5a5;
+  --bg-dark: #1e293b;
+  --bg-card: rgba(30, 41, 59, 0.5);
+  --bg-light: rgba(255, 255, 255, 0.08);
+  --text-dark: #f1f5f9;
+  --text-light: #94a3b8;
+  --border: rgba(99, 102, 241, 0.25);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 30px rgba(102, 126, 234, 0.3);
 }
 /* (removed dark mode variable overrides) */

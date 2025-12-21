@@ -62,6 +62,21 @@ function LandingPage({ onGetStarted }) {
 
   return (
     <div className="landing-shell">
+      {/* Brand Header */}
+      <div className={`brand-header ${isVisible ? "brand-visible" : ""}`}>
+        <h1 className="brand-name">
+          <span className="brand-letter">F</span>
+          <span className="brand-letter">a</span>
+          <span className="brand-letter">i</span>
+          <span className="brand-letter">r</span>
+          <span className="brand-letter">S</span>
+          <span className="brand-letter">h</span>
+          <span className="brand-letter">a</span>
+          <span className="brand-letter">r</span>
+          <span className="brand-letter">e</span>
+        </h1>
+      </div>
+
       {/* Hero Section */}
       <div className={`hero ${isVisible ? "hero-visible" : ""}`}>
         <div className="landing-glow hero-glow-1" aria-hidden="true" />

@@ -1,14 +1,85 @@
 /* ===== Shell & Base ===== */
 .landing-shell {
   min-height: 100vh;
-  background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.12), transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.1), transparent 35%),
-    radial-gradient(circle at 50% 100%, rgba(236, 72, 153, 0.08), transparent 40%),
-    linear-gradient(160deg, #0f172a 0%, #0f172a 40%, #111827 60%, #0f172a 100%);
+  background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 35%),
+    radial-gradient(circle at 50% 100%, rgba(236, 72, 153, 0.1), transparent 40%),
+    linear-gradient(160deg, #1e293b 0%, #1e293b 40%, #334155 60%, #1e293b 100%);
   color: white;
   padding: 4rem 1.5rem 3rem;
   position: relative;
   overflow: hidden;
+}
+
+/* ===== Brand Header ===== */
+.brand-header {
+  text-align: center;
+  margin: 0 auto 4rem;
+  max-width: 1200px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.brand-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.brand-name {
+  font-size: clamp(3rem, 10vw, 7rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.1em;
+  flex-wrap: wrap;
+}
+
+.brand-letter {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 8s ease infinite, letterPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  text-shadow: 0 0 40px rgba(102, 126, 234, 0.5);
+}
+
+.brand-letter:nth-child(1) { animation-delay: 0.1s, 0s; }
+.brand-letter:nth-child(2) { animation-delay: 0.15s, 0s; }
+.brand-letter:nth-child(3) { animation-delay: 0.2s, 0s; }
+.brand-letter:nth-child(4) { animation-delay: 0.25s, 0s; }
+.brand-letter:nth-child(5) { animation-delay: 0.3s, 0s; }
+.brand-letter:nth-child(6) { animation-delay: 0.35s, 0s; }
+.brand-letter:nth-child(7) { animation-delay: 0.4s, 0s; }
+.brand-letter:nth-child(8) { animation-delay: 0.45s, 0s; }
+.brand-letter:nth-child(9) { animation-delay: 0.5s, 0s; }
+
+@keyframes letterPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.3) rotate(-10deg);
+  }
+  60% {
+    transform: translateY(0) scale(1.1) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* ===== Hero Section ===== */

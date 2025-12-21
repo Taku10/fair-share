@@ -25,7 +25,7 @@ async function getOrCreateDefaultRoomFor(roommateId) {
 router.post('/', async (req, res) => {
   try {
     // Basic validation
-    const { title, frequency } = req.body;
+    const { title } = req.body;
     if (!title || !String(title).trim()) {
       return res.status(400).json({ error: 'Title is required' });
     }
@@ -59,7 +59,7 @@ router.put('/:id', async (req, res) => {
   try {
     const updated = await Chore.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-    });
+    }).populate('assignedTo');
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });

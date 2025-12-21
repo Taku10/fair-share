@@ -5,8 +5,7 @@ const choreSchema = new mongoose.Schema({
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
   title: { type: String, required: true },
   description: String,
-  frequency: { type: String, enum: ['once', 'daily', 'weekly', 'monthly'], default: 'weekly' },
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Roommate' }, // optional
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Roommate' },
   dueDate: Date,
   completed: { type: Boolean, default: false },
   completedAt: Date,

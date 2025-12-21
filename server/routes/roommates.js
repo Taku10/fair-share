@@ -26,6 +26,34 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get current user's profile
+router.get('/me', async (req, res) => {
+  try {
+    const roommate = await Roommate.findById(req.user.roommateId);
+    if (!roommate) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    res.json(roommate);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update current user's profile
+router.put('/me', async (req, res) => {
+  try {
+    const { displayName, bio, profilePicture } = req.body;
+    const updated = await Roommate.findByIdAndUpdate(
+      req.user.roommateId,
+      { displayName, bio, profilePicture },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Updating a roommate
 router.put('/:id', async (req, res) => {
   try {
