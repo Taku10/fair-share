@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const rateLimit = require('express-rate-limit');
 
 const admin = require('./firebaseAdmin');
 const Roommate = require('./models/Roommate');
@@ -15,6 +16,25 @@ const app = express();
 app.use(cors({ origin: /localhost/, credentials: true }));
 app.use(express.json());
 
+// Rate limiting middleware
+// General API rate limit - 100 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Stricter rate limit for write operations - 30 requests per 15 minutes
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 write requests per windowMs
+  message: 'Too many requests, please slow down.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // --- Your existing routers here ---
 const roomsRouter = require('./routes/rooms');
 const choresRouter = require('./routes/chores');
@@ -24,13 +44,18 @@ const chatRouter = require('./routes/chat'); // for history REST
 
 const authMiddleware = require('./middleware/auth');
 
+// Apply general rate limiting to all API routes
+app.use('/api', apiLimiter);
+
 // Protect API routes with Firebase Auth
 app.use('/api', authMiddleware);
-app.use('/api/rooms', roomsRouter);
-app.use('/api/chores', choresRouter);
-app.use('/api/expenses', expensesRouter);
-app.use('/api/roommates', roomatesRouter);
-app.use('/api/chat', chatRouter);
+
+// Apply stricter rate limiting to write operations
+app.use('/api/rooms', writeLimiter, roomsRouter);
+app.use('/api/chores', writeLimiter, choresRouter);
+app.use('/api/expenses', writeLimiter, expensesRouter);
+app.use('/api/roommates', writeLimiter, roomatesRouter);
+app.use('/api/chat', writeLimiter, chatRouter);
 
 // --- HTTP server + socket.io ---
 const server = http.createServer(app);

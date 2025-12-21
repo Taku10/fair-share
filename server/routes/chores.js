@@ -57,9 +57,34 @@ router.get('/', async (req, res) => {
 // Update a chore by id
 router.put('/:id', async (req, res) => {
   try {
-    const updated = await Chore.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    }).populate('assignedTo');
+    const { title, assignedTo, completed } = req.body;
+    
+    // Build update object with only allowed fields
+    const updateFields = {};
+    if (title !== undefined) {
+      const trimmedTitle = String(title).trim();
+      if (!trimmedTitle) {
+        return res.status(400).json({ error: 'Title cannot be empty' });
+      }
+      updateFields.title = trimmedTitle.substring(0, 100);
+    }
+    if (assignedTo !== undefined) {
+      updateFields.assignedTo = assignedTo || null;
+    }
+    if (completed !== undefined) {
+      updateFields.completed = Boolean(completed);
+    }
+    
+    const updated = await Chore.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true, runValidators: true }
+    ).populate('assignedTo');
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Chore not found' });
+    }
+    
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });

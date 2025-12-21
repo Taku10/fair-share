@@ -43,10 +43,23 @@ router.get('/me', async (req, res) => {
 router.put('/me', async (req, res) => {
   try {
     const { displayName, bio, profilePicture } = req.body;
+    
+    // Build update object with only allowed fields
+    const updateFields = {};
+    if (displayName !== undefined) {
+      updateFields.displayName = String(displayName).trim().substring(0, 50);
+    }
+    if (bio !== undefined) {
+      updateFields.bio = String(bio).trim().substring(0, 500);
+    }
+    if (profilePicture !== undefined) {
+      updateFields.profilePicture = String(profilePicture).trim();
+    }
+    
     const updated = await Roommate.findByIdAndUpdate(
       req.user.roommateId,
-      { displayName, bio, profilePicture },
-      { new: true }
+      updateFields,
+      { new: true, runValidators: true }
     );
     res.json(updated);
   } catch (err) {

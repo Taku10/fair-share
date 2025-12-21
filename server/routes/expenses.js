@@ -94,11 +94,48 @@ router.get('/', async (req, res) => {
 // UPDATE expense
 router.put('/:id', async (req, res) => {
   try {
+    const { description, amount, paidBy, splitBetween } = req.body;
+    
+    // Build update object with only allowed fields
+    const updateFields = {};
+    
+    if (description !== undefined) {
+      const trimmedDesc = String(description).trim();
+      if (!trimmedDesc) {
+        return res.status(400).json({ error: 'Description cannot be empty' });
+      }
+      updateFields.description = trimmedDesc.substring(0, 100);
+    }
+    
+    if (amount !== undefined) {
+      const parsedAmount = typeof amount === 'number' ? amount : parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ error: 'Amount must be a positive number' });
+      }
+      updateFields.amount = parsedAmount;
+    }
+    
+    if (paidBy !== undefined) {
+      updateFields.paidBy = paidBy;
+    }
+    
+    if (splitBetween !== undefined) {
+      if (!Array.isArray(splitBetween) || splitBetween.length === 0) {
+        return res.status(400).json({ error: 'splitBetween must be a non-empty array' });
+      }
+      updateFields.splitBetween = splitBetween;
+    }
+    
     const updated = await Expense.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
-    );
+      updateFields,
+      { new: true, runValidators: true }
+    ).populate('paidBy').populate('splitBetween');
+    
+    if (!updated) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+    
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
