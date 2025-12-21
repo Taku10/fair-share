@@ -11,7 +11,7 @@ function RoomApp() {
   const [activeTab, setActiveTab] = useState("chores");
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState(null);
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
 
   const loadProfile = useCallback(async () => {
     try {
@@ -24,7 +24,8 @@ function RoomApp() {
 
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleProfileClose = () => {
     setShowProfile(false);
