@@ -28,11 +28,6 @@ function CalendarSection() {
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [filterType, setFilterType] = useState("all");
 
-    useEffect(() => {
-        fetchEvents();
-        fetchRoommates();
-    }, []);
-
     async function fetchRoommates() {
         try {
             const res = await apiGet("/roommates");
@@ -52,6 +47,11 @@ function CalendarSection() {
             setError("Failed to load events");
         }
     }
+
+    useEffect(() => {
+        fetchEvents();
+        fetchRoommates();
+    }, []);
 
     function resetForm() {
         setTitle("");
@@ -307,7 +307,7 @@ function CalendarSection() {
                     <span className="day-number">{day}</span>
                     {dayEvents.length > 0 && (
                         <div className="day-events">
-                            {dayEvents.slice(0, 3).map((event, idx) => (
+                            {dayEvents.slice(0, 3).map((event) => (
                                 <div
                                     key={event._id}
                                     className="day-event-dot"
