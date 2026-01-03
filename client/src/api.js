@@ -57,6 +57,18 @@ export async function apiPut(path, data) {
   }
 }
 
+export async function apiPatch(path, data) {
+  try {
+    const token = await getAuthToken();
+    return await axios.patch(`${API_BASE}${path}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.error('apiPatch error:', path, data, err);
+    throw err;
+  }
+}
+
 export async function apiDelete(path) {
   try {
     const token = await getAuthToken();
