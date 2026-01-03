@@ -28,14 +28,34 @@ function CalendarSection() {
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [filterType, setFilterType] = useState("all");
 
-    async function fetchRoommates() {
-        try {
-            const res = await apiGet("/roommates");
-            setRoommates(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error(err);
+    useEffect(() => {
+        let isMounted = true;
+        
+        async function loadInitialData() {
+            try {
+                const [eventsRes, roommatesRes] = await Promise.all([
+                    apiGet("/events"),
+                    apiGet("/roommates")
+                ]);
+                if (isMounted) {
+                    setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
+                    setRoommates(Array.isArray(roommatesRes.data) ? roommatesRes.data : []);
+                    setError("");
+                }
+            } catch (err) {
+                console.error(err);
+                if (isMounted) {
+                    setError("Failed to load events");
+                }
+            }
         }
-    }
+        
+        loadInitialData();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     async function fetchEvents() {
         try {
@@ -47,11 +67,6 @@ function CalendarSection() {
             setError("Failed to load events");
         }
     }
-
-    useEffect(() => {
-        fetchEvents();
-        fetchRoommates();
-    }, []);
 
     function resetForm() {
         setTitle("");
