@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { apiGet } from "./api";
+import CalendarSection from "./components/CalendarSection";
 import ChatSection from "./components/ChatSection";
 import ChoresSection from "./components/ChoresSection";
 import ExpensesSection from "./components/ExpensesSection";
@@ -10,6 +11,7 @@ import RoommatesSection from "./components/RoommatesSection";
 function RoomApp() {
   const [activeTab, setActiveTab] = useState("chores");
   const [showProfile, setShowProfile] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [profile, setProfile] = useState(null);
   const { currentUser } = useAuth();
 
@@ -43,13 +45,42 @@ function RoomApp() {
             flexWrap: 'wrap',
             gap: '1rem'
           }}>
-            <div style={{ flex: '1 1 200px' }}>
-              <h1 className="app-title">FairShare</h1>
-              <p className="app-subtitle">
-                Your household, perfectly balanced
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 200px' }}>
+              <div>
+                <h1 className="app-title">FairShare</h1>
+                <p className="app-subtitle">
+                  Your household, perfectly balanced
+                </p>
+              </div>
             </div>
-            <div style={{ textAlign: 'right', flex: '0 0 auto', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '0 0 auto', position: 'relative' }}>
+              <button
+                onClick={() => setShowCalendar(true)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '12px',
+                  padding: '0.6rem',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.3rem',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+                title="Calendar"
+              >
+                📅
+              </button>
               <button
                 onClick={() => setShowProfile(!showProfile)}
                 style={{
@@ -183,6 +214,27 @@ function RoomApp() {
         {activeTab === "roommates" && <RoommatesSection />}
         {activeTab === "chat" && <ChatSection currentUser={currentUser} />}
       </main>
+
+      {/* Calendar Modal */}
+      {showCalendar && (
+        <div 
+          className="calendar-modal-overlay"
+          onClick={() => setShowCalendar(false)}
+        >
+          <div 
+            className="calendar-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowCalendar(false)}
+              className="calendar-modal-close"
+            >
+              ×
+            </button>
+            <CalendarSection />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

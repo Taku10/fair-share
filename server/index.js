@@ -41,6 +41,7 @@ const choresRouter = require('./routes/chores');
 const expensesRouter = require('./routes/expenses');
 const roomatesRouter = require('./routes/roommates');
 const chatRouter = require('./routes/chat'); // for history REST
+const eventsRouter = require('./routes/events');
 
 const authMiddleware = require('./middleware/auth');
 
@@ -56,6 +57,7 @@ app.use('/api/chores', writeLimiter, choresRouter);
 app.use('/api/expenses', writeLimiter, expensesRouter);
 app.use('/api/roommates', writeLimiter, roomatesRouter);
 app.use('/api/chat', writeLimiter, chatRouter);
+app.use('/api/events', writeLimiter, eventsRouter);
 
 // --- HTTP server + socket.io ---
 const server = http.createServer(app);
