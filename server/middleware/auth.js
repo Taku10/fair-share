@@ -1,6 +1,7 @@
 
 const admin = require('../firebaseAdmin');
 const Roommate = require('../models/Roommate');
+const { isDevAuthBypassEnabled } = require('../utils/devAuth');
 
 // Development bypass: set ALLOW_DEV_AUTH=true in server/.env to skip Firebase verification
 // and use a local/dev roommate (useful when firebase-admin isn't configured locally).
@@ -35,7 +36,7 @@ async function devBypass(req, res, next) {
 
 async function authMiddleware(req, res, next) {
   // If allowed, enable developer bypass to proceed without Firebase Admin setup
-  if (process.env.ALLOW_DEV_AUTH === 'true') {
+  if (isDevAuthBypassEnabled()) {
     return devBypass(req, res, next);
   }
 

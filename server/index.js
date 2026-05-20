@@ -11,6 +11,7 @@ const admin = require('./firebaseAdmin');
 const Roommate = require('./models/Roommate');
 const Room = require('./models/Room');
 const ChatMessage = require('./models/ChatMessage');
+const { isDevAuthBypassEnabled } = require('./utils/devAuth');
 
 const app = express();
 app.use(cors({ origin: /localhost/, credentials: true }));
@@ -79,7 +80,7 @@ io.use(async (socket, next) => {
     let decoded;
 
     // If dev bypass is enabled, synthesize a decoded token from DEV_* env vars
-    if (process.env.ALLOW_DEV_AUTH === 'true') {
+    if (isDevAuthBypassEnabled()) {
       decoded = {
         uid: process.env.DEV_FIREBASE_UID || 'dev-uid-1',
         email: process.env.DEV_EMAIL || 'dev@local',

@@ -43,11 +43,14 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 Use only for local development:
 
 ```env
+NODE_ENV=development
 ALLOW_DEV_AUTH=true
 DEV_FIREBASE_UID=dev-uid-1
 DEV_EMAIL=dev@local
 DEV_NAME=Dev User
 ```
+
+`ALLOW_DEV_AUTH=true` is ignored unless `NODE_ENV` is `development` or `test`.
 
 ## 2) Frontend (`client/.env`)
 
@@ -123,4 +126,3 @@ This mirrors current CI jobs.
 - Clients join a room using `joinRoom(roomId)`
 - Messages are sent with `sendMessage({ roomId, text, relatedType, relatedId })`
 - Server broadcasts `chatMessage`
-

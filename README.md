@@ -53,6 +53,8 @@ See:
 - `docs/DEVELOPMENT.md` for full setup details
 - `docs/API.md` for API reference
 
+Note: local auth bypass (`ALLOW_DEV_AUTH=true`) is only honored when `NODE_ENV` is `development` or `test`.
+
 ### 3) Run locally
 
 ```bash
@@ -98,4 +100,3 @@ For local parity, run the same commands in each package directory.
 Deployment is handled by `.github/workflows/ci.yml`:
 - Runs on all pushes/PRs for validation jobs
 - Deploys to Firebase Hosting only on `main` or `master`
-
