@@ -1,16 +1,68 @@
-# React + Vite
+# FairShare Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend application for FairShare, built with React + Vite and authenticated with Firebase.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Handles user sign-up/sign-in via Firebase Auth
+- Renders the main household UI (chores, expenses, roommates, chat, calendar)
+- Calls backend APIs with Firebase ID token bearer auth
+- Connects to Socket.IO for room chat updates
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 20+
+- npm 10+
+- A configured Firebase project (web app)
+- Running FairShare server API (local or deployed)
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+cd client
+npm ci
+```
+
+Create `client/.env`:
+
+```env
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MEASUREMENT_ID=...
+VITE_API_BASE=http://localhost:5000/api
+VITE_AUTH_IN_MEMORY=false
+```
+
+### Environment variables
+
+- `VITE_API_BASE` — API base URL used by `src/api.js`
+- `VITE_AUTH_IN_MEMORY`:
+  - `false` (default recommended): browser session persistence (per-tab session storage)
+  - `true`: in-memory auth persistence
+
+## Run
+
+```bash
+npm run dev
+```
+
+Dev server defaults to `http://localhost:5173`.
+
+## Build & quality checks
+
+```bash
+npm run lint
+npm run build
+```
+
+## Key files
+
+- `src/App.jsx` — app shell + auth gating
+- `src/AuthContext.jsx` — auth state provider
+- `src/firebase.js` — Firebase app/auth initialization + persistence mode
+- `src/api.js` — authenticated API client wrappers
+- `src/RoomApp.jsx` — main application tabs and profile/calendar modal controls
