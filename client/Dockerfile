@@ -5,6 +5,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+ARG VITE_API_BASE=/api
+ARG VITE_SOCKET_URL=http://localhost:5173
+ENV VITE_API_BASE=$VITE_API_BASE
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+
 COPY . .
 RUN npm run build
 
