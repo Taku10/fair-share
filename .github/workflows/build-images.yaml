@@ -25,10 +25,10 @@ jobs:
         with:
           context: ./client
           push: true
-          tags: ghcr.io/taku10/fairshare-client:${{ github.sha }}
+          tags: ghcr.io/taku10/fairshare-client:latest
 
       - uses: docker/build-push-action@v6
         with:
           context: ./server
           push: true
-          tags: ghcr.io/taku10/fairshare-server:${{ github.sha }}
+          tags: ghcr.io/taku10/fairshare-server:latest
