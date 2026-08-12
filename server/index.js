@@ -169,7 +169,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- Mongo + server start ---
+// --- Mongo + server start 
 if (!process.env.MONGO_URI) {
   console.error('❌ MONGO_URI environment variable is not set. Please create a server/.env file with MONGO_URI defined.');
   process.exit(1);
